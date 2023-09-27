@@ -104,6 +104,7 @@ def guardar_cambios(idalumno):
     apellido=apellido_entry.get()
     dni=dni_entry.get()
     carrera=carrera_combobox.get()
+    estado=estado_combobox.get()
     if nombre and apellido and dni and carrera:
         caja=tree.item(tree.selection())
         caja=caja["values"]
@@ -114,7 +115,15 @@ def guardar_cambios(idalumno):
             if car[1] == carrera:
                 carrera_id = car[0]
                 break
-        cursor.execute("update alumnos set nombre=%s, apellido=%s, dni=%s, idcarrera=%s WHERE idalumno = %s",  (nombre,apellido,dni,carrera_id, idalumno))
+        estados = cargar_estado()
+        estado_id = None
+        print(estado)
+        for est in estados:
+            if est[1] == estado:
+                estado_id = est[0]
+                print(estado_id)
+                break
+        cursor.execute("update alumnos set nombre=%s, apellido=%s, dni=%s, idcarrera=%s, idestadoalumno=%s WHERE idalumno = %s",  (nombre,apellido,dni,carrera_id,estado_id, idalumno))
         conexion.commit()
         cargar_datos()
         messagebox.showinfo("Exito!","Cambios guardados con exito!")
@@ -122,7 +131,8 @@ def guardar_cambios(idalumno):
         apellido_entry.delete(0, tk.END)
         dni_entry.delete(0, tk.END)
         carrera_combobox.set("") 
-        estado_combobox.config(state="readonly")
+        estado_combobox.set("") 
+        estado_combobox.config(state="disabled")
         guardar_button.config(text="Guardar",command=guardar_alumno)
 
 
