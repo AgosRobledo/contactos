@@ -10,10 +10,12 @@ conexion = mysql.connector.connect(host="localhost", user="root", password="estu
 cursor = conexion.cursor()
 pregunta_actual = 0
 puntuacion = 0
-tiempo = 0
+
 
 root = None
 ventana = None
+
+global inicio
 
 def crear_ventana():
 
@@ -29,7 +31,10 @@ def crear_ventana():
             jugadores_data.append((nombre, apellido, telefono, puntuacion))
             print(jugadores_data)
             ventana.destroy()
+            global inicio
+            inicio=time.time()
             abrir_juego()
+            
 
         else:
             messagebox.showerror("Error", "Los campos son obligatorios. Debes completarlos.")
@@ -105,6 +110,8 @@ frame_respuestas.pack()
 botones_respuesta = []
 
 def abrir_juego():
+    
+
     def obtener_preguntas():
         cursor.execute("SELECT preguntas, respuestas, respuestaErronea_uno, respuestaErronea_dos, respuestaErronea_tres FROM Preguntas")
         preguntas_respuestas = cursor.fetchall()
@@ -141,7 +148,17 @@ def abrir_juego():
         if pregunta_actual < len(preguntas_respuestas):
             messagebox.showinfo("Resultado", mensaje)
         else:
-            messagebox.showinfo("Fin del juego", "¡Juego terminado! Tu puntuación: " + str(puntuacion))
+            
+
+            global inicio
+            tiempo_transcurrido=(time.time()-inicio) * 1000
+            print('Tiempo transcurrido:', tiempo_transcurrido)
+            minutos, segundos= divmod(tiempo_transcurrido/1000,60)
+            segundos, milisegundos = divmod(segundos,1)
+            print(f"tiempo transcurrido: {int(minutos)}, {int(segundos)}, {int(milisegundos)}")
+            tiempo_total=(f"tiempo transcurrido: {int(minutos)}:{int(segundos)}")
+
+            messagebox.showinfo("Fin del juego", "¡Juego terminado! Tu puntuación: " + str(puntuacion)+ "\n tu tiempo fue:" + tiempo_total)
 
     for i in range(4):
         frame_grupo = tk.Frame(frame_respuestas, bg="#630551")
@@ -151,7 +168,19 @@ def abrir_juego():
 
         botones_respuesta.append(boton)
     mostrar_pregunta()
-    button_salir = tk.Button(root, text="Salir", command=lambda: root.destroy())
+    button_salir = tk.Button(root, text="SALIR",  font=("Helvetica", 20), bg="red", fg="white", command=lambda: cerrar_juego())
     button_salir.pack(pady=12)
 
+   #quiero una funcion que me permita apretar el boton salir de la ventana root y se vuelva a la ventana principal
+
+    
+
+def cerrar_juego():
+    if root:
+        root.destroy()
+    crear_ventana()
 root.mainloop()
+
+
+
+
