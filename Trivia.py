@@ -9,6 +9,8 @@ conexion = mysql.connector.connect(host="localhost", user="root", password="estu
 
 cursor = conexion.cursor()
 pregunta_actual = 0
+
+global puntuacion
 puntuacion = 0
 
 
@@ -16,19 +18,23 @@ root = None
 ventana = None
 
 global inicio
+global jugadores_data
+jugadores_data = []
+
 
 def crear_ventana():
 
     def iniciar_juego():
 
-        jugadores_data = []
+        global jugadores_data
+
         nombre = nombre_entry.get()
         apellido = apellido_entry.get()
         telefono = telefono_entry.get()
 
         # Verificar si todos los campos están llenos
         if nombre and apellido and telefono:
-            jugadores_data.append((nombre, apellido, telefono, puntuacion))
+            jugadores_data= [nombre, apellido, telefono]
             print(jugadores_data)
             ventana.destroy()
             global inicio
@@ -95,6 +101,14 @@ def crear_ventana():
     tree.config(height=23)  # Aumentar la altura del Treeview
     tree.grid(row=5, column=0, padx=250, pady=0)
 
+
+    tree.delete(*tree.get_children())  # Borrar datos existentes en el Treeview
+    cursor.execute("select codjugador, nombre, apellido, telefono, puntaje, tiempo from jugador order by puntaje DESC")
+    for row in cursor.fetchall():
+        print(row)
+        tree.insert("", "end", values=row)
+
+
 crear_ventana()
 
 root = tk.Tk()
@@ -135,7 +149,10 @@ def abrir_juego():
                 boton.config(state=tk.DISABLED)
 
     def verificar_respuesta(opcion):
-        global pregunta_actual, puntuacion
+        global pregunta_actual
+        global puntuacion
+        global jugadores_data
+
         pregunta, respuesta_correcta, _, _, _ = preguntas_respuestas[pregunta_actual]
         if opcion == respuesta_correcta:
             puntuacion += 100
@@ -150,7 +167,10 @@ def abrir_juego():
         else:
             
 
-            global inicio
+            global puntuacion_total
+            global tiempo_total
+            puntuacion_total = puntuacion
+            print(jugadores_data)
             tiempo_transcurrido=(time.time()-inicio) * 1000
             print('Tiempo transcurrido:', tiempo_transcurrido)
             minutos, segundos= divmod(tiempo_transcurrido/1000,60)
@@ -158,8 +178,11 @@ def abrir_juego():
             print(f"tiempo transcurrido: {int(minutos)}, {int(segundos)}, {int(milisegundos)}")
             tiempo_total=(f"tiempo transcurrido: {int(minutos)}:{int(segundos)}")
 
-            messagebox.showinfo("Fin del juego", "¡Juego terminado! Tu puntuación: " + str(puntuacion)+ "\n tu tiempo fue:" + tiempo_total)
+            messagebox.showinfo("Fin del juego", "¡Juego terminado! Tu puntuación: " + str(puntuacion_total)+ "\n tu tiempo fue:" + tiempo_total)
+            
 
+            
+            
     for i in range(4):
         frame_grupo = tk.Frame(frame_respuestas, bg="#630551")
         frame_grupo.pack(pady=30)
@@ -168,16 +191,17 @@ def abrir_juego():
 
         botones_respuesta.append(boton)
     mostrar_pregunta()
-    button_salir = tk.Button(root, text="SALIR",  font=("Helvetica", 20), bg="red", fg="white", command=lambda: cerrar_juego())
+    button_salir = tk.Button(root, text="SALIR",  font=("Helvetica", 20), bg="red", fg="white", command=lambda: cerrar_juego(frame_grupo))
     button_salir.pack(pady=12)
 
    #quiero una funcion que me permita apretar el boton salir de la ventana root y se vuelva a la ventana principal
 
     
 
-def cerrar_juego():
-    if root:
-        root.destroy()
+def cerrar_juego(ventana):
+    cursor.execute("INSERT INTO JUGADOR (NOMBRE, APELLIDO, TELEFONO, PUNTAJE, TIEMPO) values (%s,%s,%s,%s,%s)", (jugadores_data[0], jugadores_data[1], jugadores_data[2], puntuacion_total, tiempo_total))
+    conexion.commit()
+    ventana.destroy()
     crear_ventana()
 root.mainloop()
 
